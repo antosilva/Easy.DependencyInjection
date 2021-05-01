@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.Design;
 using NUnit.Framework;
 using Unity;
 
@@ -8,7 +7,7 @@ namespace UnityInjection.Tests
     [TestFixture]
     public class UnityConfigurationTests
     {
-        [TestCase(".\\Unity\\unity.dev.config")]
+        [TestCase(@".\Config\unity.dev.config")]
         public void Given_dev_unity_config_should_resolve_to_dev_values(string unityConfig)
         {
             UnityConfiguration unity = new(unityConfig, "ContTest");
@@ -27,7 +26,7 @@ namespace UnityInjection.Tests
             Assert.That(timestamp == "yyyy-MM-dd HH:mm:ss");
         }
 
-        [TestCase(".\\Unity\\unity.main.config")]
+        [TestCase(@".\Config\unity.main.config")]
         public void Given_main_unity_config_should_resolve_to_main_values(string unityConfig)
         {
             UnityConfiguration unity = new(unityConfig, "ContTest");

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Unity\unity.dev.config~RFb006d9d.TMP" />
+    <None Remove="Config\unity.dev.config~RFb006d9d.TMP" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,16 +21,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Unity\unity.base.config">
+    <None Update="Config\unity.base.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Unity\unity.common.config">
+    <None Update="Config\unity.common.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Unity\unity.dev.config">
+    <None Update="Config\unity.dev.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Unity\unity.main.config">
+    <None Update="Config\unity.main.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
