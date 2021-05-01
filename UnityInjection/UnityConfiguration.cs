@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using System.Linq;
@@ -9,6 +10,13 @@ namespace UnityInjection
 {
     public class UnityConfiguration : IUnityConfiguration
     {
+        protected class RecursionData
+        {
+            public AliasElementCollection Aliases;
+            public AssemblyElementCollection Assemblies;
+            public NamespaceElementCollection Namespaces;
+        }
+
         public string ConfigFile { get; }
         public string ContainerName { get; }
         public IUnityContainer UnityContainer { get; }
@@ -24,20 +32,20 @@ namespace UnityInjection
             ContainerName = containerName;
 
             UnityContainer = new UnityContainer();
-            AliasElementCollection aliases = null;
+            RecursionData data = new();
 
-            LoadContainer(UnityContainer, ConfigFile, containerName, ref aliases);
+            LoadContainer(UnityContainer, ConfigFile, containerName, ref data);
         }
 
         protected static void LoadContainer(IUnityContainer unityContainer,
                                             string configFile,
                                             string containerName,
-                                            ref AliasElementCollection aliases)
+                                            ref RecursionData data)
         {
             var fileMap = new ExeConfigurationFileMap {ExeConfigFilename = configFile};
             Configuration configuration = ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
 
-            // Base config files to load.
+            // Parent configs to load.
             KeyValueConfigurationElement baseFiles = configuration.AppSettings.Settings["base"];
             if (baseFiles != null)
             {
@@ -50,32 +58,47 @@ namespace UnityInjection
                         throw new FileNotFoundException(string.Format("Configuration file '{0}' not found", baseFile));
                     }
 
-                    // Recursively load the base unity files.
-                    LoadContainer(unityContainer, baseFile, containerName, ref aliases);
+                    // Recursively load parent files.
+                    LoadContainer(unityContainer, baseFile, containerName, ref data);
                 }
             }
 
-            // Get unity section from current config.
             UnityConfigurationSection unitySection = (UnityConfigurationSection) configuration.GetSection("unity");
 
-            // Copy only base aliases to the current unity section.
-            if (aliases != null)
+            // Copy aliases.
+            IList<AliasElement> aliasElements = data.Aliases?.Where(x => unitySection.TypeAliases.All(y => y.Alias != x.Alias)).ToList();
+            if (aliasElements != null)
             {
-                foreach (AliasElement alias in aliases)
+                foreach (AliasElement aliasElement in aliasElements)
                 {
-                    if (unitySection.TypeAliases.Any(x => x.Alias == alias.Alias))
-                    {
-                        continue;
-                    }
-
-                    unitySection.TypeAliases[alias.Alias] = alias.TypeName;
+                    unitySection.TypeAliases.Add(new AliasElement {Alias = aliasElement.Alias, TypeName = aliasElement.TypeName});
                 }
             }
 
-            // Base aliases to apply.
-            aliases = unitySection.TypeAliases;
+            // Copy namespaces.
+            IList<NamespaceElement> namespaceElements = data.Namespaces?.Where(x => unitySection.Namespaces.All(y => y.Name != x.Name)).ToList();
+            if (namespaceElements != null)
+            {
+                foreach (NamespaceElement namespaceElement in namespaceElements)
+                {
+                    unitySection.Namespaces.Add(new NamespaceElement {Name = namespaceElement.Name});
+                }
+            }
 
-            // Load the containers from the file unity section.
+            // Copy assemblies.
+            IList<AssemblyElement> assembliesElements = data.Assemblies?.Where(x => unitySection.Assemblies.All(y => y.Name != x.Name)).ToList();
+            if (assembliesElements != null)
+            {
+                foreach (AssemblyElement assemblyElement in assembliesElements)
+                {
+                    unitySection.Assemblies.Add(new AssemblyElement {Name = assemblyElement.Name});
+                }
+            }
+
+            data.Aliases = unitySection.TypeAliases;
+            data.Assemblies = unitySection.Assemblies;
+            data.Namespaces = unitySection.Namespaces;
+
             if (unitySection.Containers.Any(x => x.Name == containerName))
             {
                 unityContainer.LoadConfiguration(unitySection, containerName);
